@@ -115,7 +115,7 @@ class DocumentDetector:
     ) -> tuple[str, float]:
 
         scored = []
-        for c in scored_candidates := candidates:
+        for c in candidates:
             score = 0.0
             signals_used = 0
             max_possible = 0.0
