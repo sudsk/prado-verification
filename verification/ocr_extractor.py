@@ -131,7 +131,8 @@ Return ONLY valid JSON with this exact structure:
 }
 
 Rules:
-- MRZ lines must be exactly 44 characters using only A-Z, 0-9 and < (filler)
+- MRZ lines must be EXACTLY 44 characters — count carefully, pad with < if needed, never exceed 44
+- The last character of MRZ line 2 is always the composite check digit — do not truncate it
 - If a field is not visible or legible, use empty string
 - Do not include any text outside the JSON object
 - Preserve exact MRZ characters — do not correct or interpret them
@@ -207,8 +208,8 @@ class PassportOCRExtractor:
             return result
 
         # MRZ
-        result.mrz.line1 = data.get("mrz_line1", "").upper().strip()
-        result.mrz.line2 = data.get("mrz_line2", "").upper().strip()
+        result.mrz.line1 = data.get("mrz_line1", "").upper().strip()[:44]
+        result.mrz.line2 = data.get("mrz_line2", "").upper().strip()[:44]
 
         # VIZ
         viz = result.viz
