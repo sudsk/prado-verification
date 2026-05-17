@@ -120,32 +120,25 @@ class DocumentDetector:
             signals_used = 0
             max_possible = 0.0
 
-            # --- Cover colour (weight 0.40) ---
-            max_possible += 0.40
-            if cover_colour and c.get("cover_colour"):
-                signals_used += 1
-                if cover_colour.lower().strip() == c["cover_colour"].lower().strip():
-                    score += 0.40
-
-            # --- Photo integration technique (weight 0.25) ---
-            max_possible += 0.25
+            # --- Photo integration technique (weight 0.45) ---
+            # cover_colour removed — VFS bio-page-only scans never show the cover
+            max_possible += 0.45
             if photo_integration and c.get("photo_integration"):
                 signals_used += 1
-                # Normalise both sides for fuzzy match
                 ocr_pi = photo_integration.lower()
                 bq_pi  = c["photo_integration"].lower()
                 if ("laser" in ocr_pi and "laser" in bq_pi) or \
                    ("inkjet" in ocr_pi and "inkjet" in bq_pi):
-                    score += 0.25
+                    score += 0.45
 
-            # --- Document title (weight 0.20) ---
-            max_possible += 0.20
+            # --- Document title (weight 0.35) ---
+            max_possible += 0.35
             if document_title and c.get("title"):
                 signals_used += 1
                 if document_title.upper().strip() == c["title"].upper().strip():
-                    score += 0.20
+                    score += 0.35
 
-            # --- Issue date window (weight 0.15) ---
+            # --- Issue date window (weight 0.20) ---
             # If VIZ shows an issue date, verify it falls AFTER this version's
             # first_issued date (i.e. this version was available when issued)
             max_possible += 0.15
@@ -155,7 +148,7 @@ class DocumentDetector:
                 if parsed_issue and parsed_release:
                     signals_used += 1
                     if parsed_issue >= parsed_release:
-                        score += 0.15
+                        score += 0.20
 
             # Normalise: if signals available > 0, scale confidence
             # by how much of the max_possible we actually scored
