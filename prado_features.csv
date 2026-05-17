@@ -1,0 +1,78 @@
+feature_id,document_id,country_code,country_name,page_location,feature_category,feature_detail,light_condition,description,colours,technique,security_element,verification_method,requires_equipment,bio_page_scannable
+GBR-AO-04001-F001,GBR-AO-04001,GBR,United Kingdom,Inside front cover,UV feature,fluorescent overprint (invisible under,UV LIGHT,,"green, red",,,visual,UV lamp (365nm),False
+GBR-AO-04001-F002,GBR-AO-04001,GBR,United Kingdom,Inside front cover,Printing technique,,,"latent image ""UK"" within a",,intaglio printing Latent image,,visual,loupe/microscope,False
+GBR-AO-04001-F003,GBR-AO-04001,GBR,United Kingdom,Inside back cover,UV feature,fluorescent overprint (invisible under,UV LIGHT,,"red, green",,,visual,UV lamp (365nm),False
+GBR-AO-04001-F004,GBR-AO-04001,GBR,United Kingdom,Biodata page,Substrate,,,,,,,visual,physical feel,False
+GBR-AO-04001-F005,GBR-AO-04001,GBR,United Kingdom,Biodata page,Watermark,,TRANSMITTED,,,,,visual,light box (transmitted),False
+GBR-AO-04001-F006,GBR-AO-04001,GBR,United Kingdom,Biodata page,UV feature,fluorescent fibres,UV LIGHT,,,,,visual,UV lamp (365nm),False
+GBR-AO-04001-F007,GBR-AO-04001,GBR,United Kingdom,Biodata page,Laminate,,UV LIGHT,,,,,visual,UV lamp + tilt,False
+GBR-AO-04001-F008,GBR-AO-04001,GBR,United Kingdom,Biodata page,OVD (optically variable device),hologram,,holographic laminate features a Holographic laminate,,,,visual,tilt/oblique light,False
+GBR-AO-04001-F009,GBR-AO-04001,GBR,United Kingdom,Biodata page,Printing technique,,,fine-line design depicting a map of,,,rainbow colouring,visual,loupe/microscope,False
+GBR-AO-04001-F010,GBR-AO-04001,GBR,United Kingdom,Biodata page,Facial image,colour,,,,,,digital,none,True
+GBR-AO-04001-F011,GBR-AO-04001,GBR,United Kingdom,Biodata page,Electronic data,facial image,,,,,,digital,NFC reader,True
+GBR-AO-04001-F012,GBR-AO-04001,GBR,United Kingdom,Inner page(s),UV feature,fluorescent overprint (invisible under,UV LIGHT,,"red, green",,,visual,UV lamp (365nm),False
+GBR-AO-04001-F013,GBR-AO-04001,GBR,United Kingdom,Inner page(s),Substrate,,,,,,,visual,physical feel,False
+GBR-AO-04001-F014,GBR-AO-04001,GBR,United Kingdom,Inner page(s),Watermark,,TRANSMITTED,,,,,visual,light box (transmitted),False
+GBR-AO-04001-F015,GBR-AO-04001,GBR,United Kingdom,Inner page(s),Facial image,secondary (ghost) image - colour,,,,,,digital,none,False
+GBR-AO-04002-F001,GBR-AO-04002,GBR,United Kingdom,Inside front cover,UV feature,fluorescent overprint (invisible under,UV LIGHT,oak tree leaves,"green, red",,,visual,UV lamp (365nm),False
+GBR-AO-04002-F002,GBR-AO-04002,GBR,United Kingdom,Inside front cover,Printing technique,,NORMAL,"latent image ""UK"" within a",,intaglio printing,latent image,visual,loupe/microscope,False
+GBR-AO-04002-F003,GBR-AO-04002,GBR,United Kingdom,Inside back cover,UV feature,fluorescent overprint (invisible under,UV LIGHT,oak tree leaves,"red, green",,,visual,UV lamp (365nm),False
+GBR-AO-04002-F004,GBR-AO-04002,GBR,United Kingdom,Biodata page,Watermark,,TRANSMITTED,,,,,visual,light box (transmitted),False
+GBR-AO-04002-F005,GBR-AO-04002,GBR,United Kingdom,Biodata page,OVD (optically variable device),,NORMAL,"metallised area at the left side of, and",,,,visual,tilt/oblique light,False
+GBR-AO-04002-F006,GBR-AO-04002,GBR,United Kingdom,Biodata page,OVD (optically variable device),hologram,NORMAL,holographic laminate features a,,,,visual,tilt/oblique light,False
+GBR-AO-04002-F007,GBR-AO-04002,GBR,United Kingdom,Biodata page,Laminate,,UV LIGHT,,,,,visual,UV lamp + tilt,False
+GBR-AO-04002-F008,GBR-AO-04002,GBR,United Kingdom,Biodata page,Printing technique,,,see-through register depicting a,,offset printing,see-through register,visual,loupe/microscope,False
+GBR-AO-04002-F009,GBR-AO-04002,GBR,United Kingdom,Biodata page,Personal data,,NORMAL,,,,,digital,none,True
+GBR-AO-04002-F010,GBR-AO-04002,GBR,United Kingdom,Biodata page,Facial image,colour,NORMAL,,,inkjet printing,,digital,none,True
+GBR-AO-04002-F011,GBR-AO-04002,GBR,United Kingdom,Biodata page,Electronic data,microchip - contactless,NORMAL,,,,,digital,NFC reader,True
+GBR-AO-04002-F012,GBR-AO-04002,GBR,United Kingdom,Inner page(s),UV feature,fluorescent overprint (invisible under,UV LIGHT,,"red, green",,,visual,UV lamp (365nm),False
+GBR-AO-04002-F013,GBR-AO-04002,GBR,United Kingdom,Inner page(s),Watermark,,TRANSMITTED,,,,,visual,light box (transmitted),False
+GBR-AO-04002-F014,GBR-AO-04002,GBR,United Kingdom,Inner page(s),Printing technique,,,see-through register depicting a,,,see-through register,visual,loupe/microscope,False
+GBR-AO-04002-F015,GBR-AO-04002,GBR,United Kingdom,Inner page(s),Printing technique,,NORMAL,,,intaglio printing,,visual,loupe/microscope,False
+GBR-AO-04002-F016,GBR-AO-04002,GBR,United Kingdom,Inner page(s),Facial image,secondary (ghost) image - colour,NORMAL,,,inkjet printing,,digital,none,False
+GBR-AO-04002-F017,GBR-AO-04002,GBR,United Kingdom,Inner page(s),Printing technique,,TRANSMITTED,visa pages contain a see-through,,,see-through register,visual,loupe/microscope,False
+GBR-AO-05001-F001,GBR-AO-05001,GBR,United Kingdom,Inside front cover,UV feature,fluorescent overprint (invisible under,UV LIGHT,,,,,visual,UV lamp (365nm),False
+GBR-AO-05001-F002,GBR-AO-05001,GBR,United Kingdom,Inside front cover,Printing technique,,,"latent image ""UK""",,intaglio printing,,visual,loupe/microscope,False
+GBR-AO-05001-F003,GBR-AO-05001,GBR,United Kingdom,Inside back cover,UV feature,fluorescent overprint (invisible under,UV LIGHT,,,,,visual,UV lamp (365nm),False
+GBR-AO-05001-F004,GBR-AO-05001,GBR,United Kingdom,Inside back cover,Printing technique,,,"latent image ""UK""",,intaglio printing,latent image,visual,loupe/microscope,False
+GBR-AO-05001-F005,GBR-AO-05001,GBR,United Kingdom,Biodata page,Substrate,,,,multi-coloured,,,visual,physical feel,False
+GBR-AO-05001-F006,GBR-AO-05001,GBR,United Kingdom,Biodata page,Watermark,,TRANSMITTED,Gipsy Moth IV sailing vessel Watermark and additional,,,,visual,light box (transmitted),False
+GBR-AO-05001-F007,GBR-AO-05001,GBR,United Kingdom,Biodata page,UV feature,fluorescent overprint (invisible under,UV LIGHT (365 nm),,,,,visual,UV lamp (365nm),False
+GBR-AO-05001-F008,GBR-AO-05001,GBR,United Kingdom,Biodata page,OVD (optically variable device),,,Metallised area at the left side and,,,,visual,tilt/oblique light,False
+GBR-AO-05001-F009,GBR-AO-05001,GBR,United Kingdom,Biodata page,Laminate,,,,,,,visual,UV lamp + tilt,False
+GBR-AO-05001-F010,GBR-AO-05001,GBR,United Kingdom,Biodata page,Facial image,colour,,,,inkjet printing,,digital,none,True
+GBR-AO-05001-F011,GBR-AO-05001,GBR,United Kingdom,Biodata page,Printing technique,,TRANSMITTED,see-through register depicting a,,,,visual,loupe/microscope,False
+GBR-AO-05001-F012,GBR-AO-05001,GBR,United Kingdom,Inner page(s),UV feature,fluorescent overprint (invisible under,UV LIGHT (365 nm),,,,,visual,UV lamp (365nm),False
+GBR-AO-05001-F013,GBR-AO-05001,GBR,United Kingdom,Inner page(s),Numbering,,,,,,,digital,none,False
+GBR-AO-05001-F014,GBR-AO-05001,GBR,United Kingdom,Inner page(s),Watermark,,TRANSMITTED,different style electrotype watermark,,,,visual,light box (transmitted),False
+GBR-AO-05001-F015,GBR-AO-05001,GBR,United Kingdom,Inner page(s),Facial image,secondary (ghost) image - colour,,,,inkjet printing,,digital,none,False
+GBR-AO-05001-F016,GBR-AO-05001,GBR,United Kingdom,Inner page(s),Printing technique,,,fine-line design depicting a map of,,intaglio printing,rainbow colouring,visual,loupe/microscope,False
+GBR-AO-05001-F017,GBR-AO-05001,GBR,United Kingdom,Inner page(s),Printing technique,,TRANSMITTED,,,,,visual,loupe/microscope,False
+GBR-AO-05002-F001,GBR-AO-05002,GBR,United Kingdom,Inside front cover,UV feature,fluorescent overprint (invisible under,UV LIGHT,,,,,visual,UV lamp (365nm),False
+GBR-AO-05002-F002,GBR-AO-05002,GBR,United Kingdom,Inside front cover,Printing technique,,,"latent image ""UK""","burgundy, brown",,,visual,loupe/microscope,False
+GBR-AO-05002-F003,GBR-AO-05002,GBR,United Kingdom,Inside back cover,UV feature,fluorescent overprint (invisible under,UV LIGHT,,,,,visual,UV lamp (365nm),False
+GBR-AO-05002-F004,GBR-AO-05002,GBR,United Kingdom,Inside back cover,Printing technique,,,"latent image ""UK""",blue,intaglio printing,,visual,loupe/microscope,False
+GBR-AO-05002-F005,GBR-AO-05002,GBR,United Kingdom,Biodata page,Substrate,,,,multi-coloured,,,visual,physical feel,False
+GBR-AO-05002-F006,GBR-AO-05002,GBR,United Kingdom,Biodata page,Watermark,,TRANSMITTED,Gipsy Moth IV sailing vessel,,,,visual,light box (transmitted),False
+GBR-AO-05002-F007,GBR-AO-05002,GBR,United Kingdom,Biodata page,UV feature,fluorescent overprint (invisible under,UV LIGHT (365 nm),,,,,visual,UV lamp (365nm),False
+GBR-AO-05002-F008,GBR-AO-05002,GBR,United Kingdom,Biodata page,UV feature,fluorescent fibres,UV LIGHT (365 nm),,multi-coloured,,,visual,UV lamp (365nm),False
+GBR-AO-05002-F009,GBR-AO-05002,GBR,United Kingdom,Biodata page,OVD (optically variable device),,,metallised area at the left side and,,,,visual,tilt/oblique light,False
+GBR-AO-05002-F010,GBR-AO-05002,GBR,United Kingdom,Biodata page,Laminate,,,,,,,visual,UV lamp + tilt,False
+GBR-AO-05002-F011,GBR-AO-05002,GBR,United Kingdom,Biodata page,Facial image,colour,,,,inkjet printing,,digital,none,True
+GBR-AO-05002-F012,GBR-AO-05002,GBR,United Kingdom,Biodata page,Printing technique,,TRANSMITTED,see-through register depicting a,,,,visual,loupe/microscope,False
+GBR-AO-05002-F013,GBR-AO-05002,GBR,United Kingdom,Inner page(s),UV feature,fluorescent overprint (invisible under,UV LIGHT (365 nm),,,,,visual,UV lamp (365nm),False
+GBR-AO-05002-F014,GBR-AO-05002,GBR,United Kingdom,Inner page(s),Numbering,,,,,,,digital,none,False
+GBR-AO-05002-F015,GBR-AO-05002,GBR,United Kingdom,Inner page(s),Watermark,,TRANSMITTED,different style electrotype watermark,,,,visual,light box (transmitted),False
+GBR-AO-05002-F016,GBR-AO-05002,GBR,United Kingdom,Inner page(s),Facial image,secondary (ghost) image - colour,,,,inkjet printing,,digital,none,False
+GBR-AO-05002-F017,GBR-AO-05002,GBR,United Kingdom,Inner page(s),Printing technique,,,fine-line design depicting a map of,,intaglio printing,rainbow colouring,visual,loupe/microscope,False
+GBR-AO-05002-F018,GBR-AO-05002,GBR,United Kingdom,Inner page(s),Binding,,,,,,,visual,physical inspection,False
+GBR-AO-05002-F019,GBR-AO-05002,GBR,United Kingdom,Inner page(s),Printing technique,,TRANSMITTED,,,,see-through register,visual,loupe/microscope,False
+GBR-AO-06001-F001,GBR-AO-06001,GBR,United Kingdom,Integrated biodata card - recto (identity),Substrate,PC (polycarbonate),,,,,,visual,physical feel,False
+GBR-AO-06001-F002,GBR-AO-06001,GBR,United Kingdom,Integrated biodata card - recto (identity),UV feature,fluorescent overprint (invisible under,UV LIGHT (365 nm),,,,rainbow colouring,visual,UV lamp (365nm),False
+GBR-AO-06001-F003,GBR-AO-06001,GBR,United Kingdom,Integrated biodata card - recto (identity),OVD (optically variable device),variable laser image (CLI® / MLI®),OBLIQUE,The holder's facial image and the,,,,visual,tilt/oblique light,False
+GBR-AO-06001-F004,GBR-AO-06001,GBR,United Kingdom,Integrated biodata card - recto (identity),OVD (optically variable device),,,A clear colour switch is visible when,,,,visual,tilt/oblique light,False
+GBR-AO-06001-F005,GBR-AO-06001,GBR,United Kingdom,Integrated biodata card - recto (identity),Personal data,,,date of birth and passport serial,,raised (tactile) laser engraving,,digital,none,True
+GBR-AO-06001-F006,GBR-AO-06001,GBR,United Kingdom,Integrated biodata card - recto (identity),Facial image,secondary (ghost) image -,,,,laser engraving,,digital,none,True
+GBR-AO-06001-F007,GBR-AO-06001,GBR,United Kingdom,Inner page(s),UV feature,fluorescent overprint (invisible under,UV LIGHT (365 nm),,multi-coloured,,high-resolution true colour UV,visual,UV lamp (365nm),False
+GBR-AO-06001-F008,GBR-AO-06001,GBR,United Kingdom,Inner page(s),Additional safeguard,transparent window The image on page 3 contains,,,,,,visual,physical inspection,False
+GBR-AO-06001-F009,GBR-AO-06001,GBR,United Kingdom,Inner page(s),Watermark,,TRANSMITTED,,,,,visual,light box (transmitted),False
