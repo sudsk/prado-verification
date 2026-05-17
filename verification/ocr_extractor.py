@@ -266,11 +266,72 @@ class PassportOCRExtractor:
                 or mrz_surname == viz_surname
             )
 
-        # Nationality
+        # Nationality — map printed text to ISO-3 before comparing
+        # e.g. "BRITISH CITIZEN" → "GBR", "AMERICAN" → "USA"
+        NATIONALITY_TEXT_MAP = {
+            "BRITISH CITIZEN":              "GBR",
+            "BRITISH NATIONAL":             "GBR",
+            "BRITISH NATIONAL (OVERSEAS)":  "GBR",
+            "BRITISH SUBJECT":              "GBR",
+            "BRITISH OVERSEAS TERRITORIES": "GBR",
+            "BRITISH PROTECTED PERSON":     "GBR",
+            "UNITED KINGDOM":               "GBR",
+            "AMERICAN":                     "USA",
+            "UNITED STATES":                "USA",
+            "FRENCH":                       "FRA",
+            "GERMAN":                       "DEU",
+            "ITALIAN":                      "ITA",
+            "SPANISH":                      "ESP",
+            "DUTCH":                        "NLD",
+            "BELGIAN":                      "BEL",
+            "SWEDISH":                      "SWE",
+            "NORWEGIAN":                    "NOR",
+            "DANISH":                       "DNK",
+            "FINNISH":                      "FIN",
+            "POLISH":                       "POL",
+            "PORTUGUESE":                   "PRT",
+            "GREEK":                        "GRC",
+            "AUSTRALIAN":                   "AUS",
+            "CANADIAN":                     "CAN",
+            "INDIAN":                       "IND",
+            "PAKISTANI":                    "PAK",
+            "BANGLADESHI":                  "BGD",
+            "JAPANESE":                     "JPN",
+            "CHINESE":                      "CHN",
+            "KOREAN":                       "KOR",
+            "SOUTH AFRICAN":                "ZAF",
+            "NIGERIAN":                     "NGA",
+            "KENYAN":                       "KEN",
+            "GHANAIAN":                     "GHA",
+            "JAMAICAN":                     "JAM",
+            "IRISH":                        "IRL",
+            "NEW ZEALAND":                  "NZL",
+            "SAUDI":                        "SAU",
+            "EMIRATI":                      "ARE",
+            "TURKISH":                      "TUR",
+            "ISRAELI":                      "ISR",
+            "BRAZILIAN":                    "BRA",
+            "MEXICAN":                      "MEX",
+            "ARGENTINIAN":                  "ARG",
+            "COLOMBIAN":                    "COL",
+        }
         mrz_nat = mrz.line2[10:13].replace("<", "").strip()
-        viz_nat = viz.nationality.upper()[:3].strip()
-        if mrz_nat and viz_nat:
-            result.nationality_match = mrz_nat == viz_nat
+        viz_nat_raw = viz.nationality.upper().strip()
+        # Try direct 3-letter ISO match first
+        viz_nat_iso = re.sub(r"[^A-Z]", "", viz_nat_raw)[:3]
+        # Try text map exact match
+        viz_nat_mapped = NATIONALITY_TEXT_MAP.get(viz_nat_raw, "")
+        # Try partial / contains match for variants e.g. "BRITISH OVERSEAS CITIZEN"
+        if not viz_nat_mapped:
+            for k, v in NATIONALITY_TEXT_MAP.items():
+                if viz_nat_raw.startswith(k) or k in viz_nat_raw:
+                    viz_nat_mapped = v
+                    break
+        if mrz_nat and (viz_nat_iso or viz_nat_mapped):
+            result.nationality_match = (
+                mrz_nat == viz_nat_mapped
+                or (len(viz_nat_iso) == 3 and mrz_nat == viz_nat_iso)
+            )
 
     @staticmethod
     def _normalise_date(date_str: str) -> str:
