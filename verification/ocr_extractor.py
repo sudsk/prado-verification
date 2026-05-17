@@ -1,7 +1,7 @@
 """
 verification/ocr_extractor.py
 ==============================
-Extract passport bio page fields using Gemini Vision (gemini-3-flash-preview).
+Extract passport bio page fields using Gemini Vision (gemini-2.5-flash).
 
 Extracts:
   - MRZ lines (2 x 44 chars)
@@ -140,7 +140,7 @@ Rules:
 
 class PassportOCRExtractor:
 
-    def __init__(self, project_id: Optional[str] = None, location: str = "europe-west2"):
+    def __init__(self, project_id: Optional[str] = None, location: str = "us-central1"):
         self.project_id = project_id or os.environ.get("GCP_PROJECT_ID", "")
         self.location = location
         self._client = None
@@ -150,7 +150,7 @@ class PassportOCRExtractor:
             import vertexai
             from vertexai.generative_models import GenerativeModel
             vertexai.init(project=self.project_id, location=self.location)
-            self._client = GenerativeModel("gemini-3-flash-preview")
+            self._client = GenerativeModel("gemini-2.5-flash")
         return self._client
 
     def extract_from_file(self, image_path: str) -> OCRResult:
@@ -175,7 +175,7 @@ class PassportOCRExtractor:
             import vertexai
 
             vertexai.init(project=self.project_id, location=self.location)
-            model = GenerativeModel("gemini-3-flash-preview")
+            model = GenerativeModel("gemini-2.5-flash")
 
             image_part = Part.from_data(data=image_bytes, mime_type=mime_type)
             response = model.generate_content([EXTRACTION_PROMPT, image_part])
