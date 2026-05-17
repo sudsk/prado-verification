@@ -320,8 +320,9 @@ class PRADOMatcher:
             issues.append("DOB mismatch MRZ/VIZ")
         if ocr_result.expiry_match is False:
             issues.append("expiry mismatch MRZ/VIZ")
-        if ocr_result.nationality_match is False:
-            issues.append("nationality mismatch MRZ/VIZ")
+        # Nationality deliberately excluded — VIZ prints "BRITISH CITIZEN" etc.
+        # while MRZ uses ISO-3 "GBR". Mismatch here is a display format difference
+        # not a forgery signal. Nationality is resolved separately in ocr_extractor.
         check.check_pass = len(issues) == 0
         check.check_note = "All fields consistent" if check.check_pass else f"Issues: {'; '.join(issues)}"
 
