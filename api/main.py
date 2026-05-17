@@ -1,5 +1,5 @@
 """
-api/main.py — PRADO Passport Verification API v0.3.0
+api/main.py — PRADO Passport Verification API v0.4.0
 """
 
 import json, os, uuid
@@ -17,18 +17,20 @@ from verification.mrz_checker import check_mrz
 from verification.ocr_extractor import PassportOCRExtractor
 from verification.prado_matcher import PRADOMatcher
 from verification.document_detector import DocumentDetector
+from verification.biometric_checker import BiometricChecker
 
 app = FastAPI(
     title="PRADO Passport Verification API",
     description="Automated passport authenticity verification using PRADO security feature data",
-    version="0.3.0",
+    version="0.4.0",
 )
 app.add_middleware(CORSMiddleware, allow_origins=["*"],
                    allow_methods=["*"], allow_headers=["*"])
 
-_ocr_extractor = None
-_prado_matcher  = None
-_doc_detector   = None
+_ocr_extractor    = None
+_prado_matcher    = None
+_doc_detector     = None
+_biometric_checker = None
 
 
 def get_ocr_extractor() -> PassportOCRExtractor:
@@ -61,14 +63,27 @@ def get_doc_detector() -> DocumentDetector:
     return _doc_detector
 
 
+def get_biometric_checker() -> BiometricChecker:
+    global _biometric_checker
+    if _biometric_checker is None:
+        threshold = float(os.environ.get("FACE_MATCH_THRESHOLD", "0.75"))
+        _biometric_checker = BiometricChecker(
+            project_id=os.environ.get("GCP_PROJECT_ID"),
+            location=os.environ.get("GCP_LOCATION", "us-central1"),
+            match_threshold=threshold,
+        )
+    return _biometric_checker
+
+
 # ---------------------------------------------------------------------------
 # Risk scorer
 # ---------------------------------------------------------------------------
 
-def compute_risk_score(mrz_result, ocr_result, prado_result):
+def compute_risk_score(mrz_result, ocr_result, prado_result, biometric_result):
     score = 0.0
     reasons = []
 
+    # MRZ checks (max 0.50)
     if mrz_result:
         if not mrz_result.all_checkdigits_pass:
             score += 0.35
@@ -80,14 +95,30 @@ def compute_risk_score(mrz_result, ocr_result, prado_result):
             score += 0.05
             reasons.append("Invalid document type in MRZ")
 
+    # OCR consistency (max 0.35)
     if ocr_result:
         if not ocr_result.consistency_pass:
             score += 0.25
             reasons.append("MRZ / VIZ field mismatch")
         if not ocr_result.viz.photo_present:
             score += 0.10
-            reasons.append("No photo detected")
+            reasons.append("No photo detected in bio page")
 
+    # Biometric face match (max 0.30)
+    if biometric_result:
+        if biometric_result.error:
+            pass  # don't penalise if biometric check errored
+        elif not biometric_result.face_detected_selfie:
+            score += 0.10
+            reasons.append("No face detected in selfie")
+        elif not biometric_result.face_match_pass:
+            score += 0.30
+            reasons.append(
+                f"Face match failed (score={biometric_result.face_match_score:.2f}, "
+                f"threshold={biometric_result.face_match_threshold})"
+            )
+
+    # PRADO digital checks (max 0.20)
     if prado_result:
         total = prado_result.digital_pass_count + prado_result.digital_fail_count
         if total > 0:
@@ -115,15 +146,16 @@ def compute_risk_score(mrz_result, ocr_result, prado_result):
 async def root():
     return {
         "service": "prado-verification",
-        "version": "0.3.0",
+        "version": "0.4.0",
         "status": "ok",
         "docs": "/docs",
         "endpoints": {
-            "POST /verify":     "Full verification — scan + optional document_id",
-            "POST /verify/mrz": "MRZ-only check — no image needed",
-            "POST /detect":     "Detect document_id from scan only",
+            "POST /verify":        "Full verification — scan + optional selfie + optional document_id",
+            "POST /verify/mrz":    "MRZ-only check — no image or BQ needed",
+            "POST /verify/biometric": "Face match only — passport scan + selfie",
+            "POST /detect":        "Detect document_id from scan alone",
             "GET  /document/{id}": "Fetch PRADO features for a document",
-            "GET  /health":     "Liveness check",
+            "GET  /health":        "Liveness check",
         }
     }
 
@@ -135,7 +167,6 @@ async def health():
 
 @app.get("/document/{document_id}")
 async def get_document_features(document_id: str):
-    """Fetch all PRADO features for a document from BigQuery."""
     try:
         features = get_prado_matcher().fetch_features(document_id)
         return {
@@ -151,10 +182,7 @@ async def get_document_features(document_id: str):
 async def detect_document(
     scan: UploadFile = File(..., description="Bio page scan (JPEG/PNG)"),
 ):
-    """
-    Detect the PRADO document_id from a passport scan alone.
-    No document_id needed — derived from OCR signals.
-    """
+    """Detect the PRADO document_id from a passport scan alone."""
     image_bytes = await scan.read()
     mime_type = "image/jpeg" if "jpeg" in (scan.content_type or "") else "image/png"
 
@@ -165,30 +193,27 @@ async def detect_document(
     doc_id, confidence = get_doc_detector().detect_from_ocr(ocr)
 
     return {
-        "detected_document_id":       doc_id,
-        "confidence":                 confidence,
-        "country_code":               ocr.mrz.line1[2:5].replace("<","").strip() if ocr.mrz.line1 else "",
-        "detection_signals_used": {
-            "cover_colour":            ocr.viz.cover_colour,
-            "photo_integration":       ocr.viz.photo_integration_technique,
-            "document_title":          ocr.viz.document_title,
-            "date_of_issue":           ocr.viz.date_of_issue,
+        "detected_document_id": doc_id,
+        "confidence":           confidence,
+        "country_code":         ocr.mrz.line1[2:5].replace("<","").strip() if ocr.mrz.line1 else "",
+        "detection_signals": {
+            "photo_integration_technique": ocr.viz.photo_integration_technique,
+            "document_title":              ocr.viz.document_title,
+            "date_of_issue":               ocr.viz.date_of_issue,
         },
         "ocr_summary": {
-            "surname":    ocr.viz.surname,
-            "doc_number": ocr.viz.doc_number,
-            "photo_type": ocr.viz.photo_type,
+            "surname":      ocr.viz.surname,
+            "doc_number":   ocr.viz.doc_number,
+            "photo_type":   ocr.viz.photo_type,
             "mrz_complete": ocr.mrz.complete,
-        }
+        },
     }
 
 
 @app.post("/verify/mrz")
 async def verify_mrz_only(request: dict):
     """MRZ intrinsic checks only — no image or BigQuery needed."""
-    line1 = request.get("line1", "")
-    line2 = request.get("line2", "")
-    result = check_mrz(line1, line2)
+    result = check_mrz(request.get("line1", ""), request.get("line2", ""))
     return {
         "verification_id": str(uuid.uuid4()),
         "timestamp":       datetime.now(timezone.utc).isoformat(),
@@ -197,50 +222,68 @@ async def verify_mrz_only(request: dict):
     }
 
 
+@app.post("/verify/biometric")
+async def verify_biometric_only(
+    scan:   UploadFile = File(..., description="Passport bio page scan (JPEG/PNG)"),
+    selfie: UploadFile = File(..., description="Live photo or selfie (JPEG/PNG)"),
+):
+    """Face match only — no BQ or MRZ checks."""
+    scan_bytes   = await scan.read()
+    selfie_bytes = await selfie.read()
+
+    scan_mime   = "image/jpeg" if "jpeg" in (scan.content_type   or "") else "image/png"
+    selfie_mime = "image/jpeg" if "jpeg" in (selfie.content_type or "") else "image/png"
+
+    result = get_biometric_checker().check_from_bytes(
+        passport_bytes=scan_bytes, passport_mime=scan_mime,
+        selfie_bytes=selfie_bytes, selfie_mime=selfie_mime,
+    )
+
+    return {
+        "verification_id": str(uuid.uuid4()),
+        "timestamp":       datetime.now(timezone.utc).isoformat(),
+        "biometric":       result.to_dict(),
+        "overall_verdict": "PASS" if result.overall_pass else "FAIL",
+    }
+
+
 @app.post("/verify")
 async def verify_passport(
-    scan: UploadFile = File(..., description="Bio page scan (JPEG/PNG)"),
-    document_id: str = Form(
-        "", description="PRADO document ID e.g. GBR-AO-06001 — auto-detected if blank"
-    ),
-    mrz_line1: str = Form(
-        "", description="MRZ line 1 (44 chars) — extracted from scan if blank"
-    ),
-    mrz_line2: str = Form(
-        "", description="MRZ line 2 (44 chars) — extracted from scan if blank"
-    ),
-    nfc_data_json: str = Form(
-        "", description="NFC chip data as JSON string — optional"
-    ),
+    scan:          UploadFile  = File(...,  description="Passport bio page scan (JPEG/PNG)"),
+    selfie:        Optional[UploadFile] = File(None, description="Live photo or selfie — optional but recommended"),
+    document_id:   str = Form("",  description="PRADO document ID — auto-detected if blank"),
+    mrz_line1:     str = Form("",  description="MRZ line 1 (44 chars) — extracted from scan if blank"),
+    mrz_line2:     str = Form("",  description="MRZ line 2 (44 chars) — extracted from scan if blank"),
+    nfc_data_json: str = Form("",  description="NFC chip data as JSON — optional"),
 ):
     """
     Full verification pipeline:
-      1. OCR bio page scan → MRZ + VIZ fields + photo signals
+      1. OCR bio page → MRZ + VIZ + photo signals
       2. MRZ intrinsic checks (ICAO 9303 check digits, expiry, format)
       3. MRZ vs VIZ consistency
       4. Auto-detect document_id if not provided
-      5. PRADO feature lookup from BigQuery
-      6. Run all digital checks; flag visual checks for manual review
-      7. Compute risk score and overall verdict
+      5. PRADO feature lookup + digital checks + visual flags
+      6. Biometric face match (if selfie provided)
+      7. Risk score + overall verdict
 
-    document_id is optional — auto-detected from OCR signals if omitted.
+    selfie is optional — if not provided, biometric check is skipped.
+    document_id is optional — auto-detected from OCR signals.
     """
     verification_id = str(uuid.uuid4())
     timestamp = datetime.now(timezone.utc).isoformat()
 
-    image_bytes = await scan.read()
-    mime_type = "image/jpeg" if "jpeg" in (scan.content_type or "") else "image/png"
+    scan_bytes = await scan.read()
+    scan_mime  = "image/jpeg" if "jpeg" in (scan.content_type or "") else "image/png"
 
     # --- Step 1: OCR ---
     ocr_result = None
     try:
-        ocr_result = get_ocr_extractor().extract_from_bytes(image_bytes, mime_type)
-        # Use OCR MRZ if caller didn't provide
+        ocr_result = get_ocr_extractor().extract_from_bytes(scan_bytes, scan_mime)
         if not mrz_line1 and ocr_result.mrz.line1:
             mrz_line1 = ocr_result.mrz.line1
         if not mrz_line2 and ocr_result.mrz.line2:
             mrz_line2 = ocr_result.mrz.line2
-    except Exception as e:
+    except Exception:
         ocr_result = None
 
     # --- Step 2: MRZ checks ---
@@ -262,19 +305,18 @@ async def verify_passport(
 
     if not document_id and ocr_result:
         document_id, detection_confidence = get_doc_detector().detect_from_ocr(ocr_result)
-        if document_id:
-            detection_note = f"auto_detected (confidence={detection_confidence})"
-        else:
-            detection_note = "detection_failed — PRADO checks skipped"
+        detection_note = (
+            f"auto_detected (confidence={detection_confidence})"
+            if document_id else "detection_failed — PRADO checks skipped"
+        )
 
-    # Derive country code
     country_code = ""
     if document_id:
         country_code = document_id.split("-")[0]
     elif mrz_line1 and len(mrz_line1) >= 5:
         country_code = mrz_line1[2:5].replace("<", "").strip()
 
-    # --- Steps 5+6: PRADO checks ---
+    # --- Steps 5: PRADO checks ---
     prado_result = None
     if document_id:
         try:
@@ -288,8 +330,23 @@ async def verify_passport(
         except Exception:
             pass
 
+    # --- Step 6: Biometric face match ---
+    biometric_result = None
+    if selfie:
+        try:
+            selfie_bytes = await selfie.read()
+            selfie_mime  = "image/jpeg" if "jpeg" in (selfie.content_type or "") else "image/png"
+            biometric_result = get_biometric_checker().check_from_bytes(
+                passport_bytes=scan_bytes, passport_mime=scan_mime,
+                selfie_bytes=selfie_bytes,  selfie_mime=selfie_mime,
+            )
+        except Exception as e:
+            pass
+
     # --- Step 7: Risk score ---
-    risk_score, verdict, summary = compute_risk_score(mrz_result, ocr_result, prado_result)
+    risk_score, verdict, summary = compute_risk_score(
+        mrz_result, ocr_result, prado_result, biometric_result
+    )
 
     return {
         "verification_id":      verification_id,
@@ -300,9 +357,14 @@ async def verify_passport(
         "country_code":         country_code,
         "overall_verdict":      verdict,
         "risk_score":           risk_score,
-        "mrz_checks":   mrz_result.to_dict() if mrz_result else {"error": "MRZ not available"},
-        "ocr_checks":   ocr_result.to_dict() if ocr_result else {"error": "OCR not performed"},
-        "prado_checks": prado_result.to_dict() if prado_result else {"error": "PRADO checks not performed"},
+        "mrz_checks":           mrz_result.to_dict() if mrz_result
+                                else {"error": "MRZ not available"},
+        "ocr_checks":           ocr_result.to_dict() if ocr_result
+                                else {"error": "OCR not performed"},
+        "biometric_checks":     biometric_result.to_dict() if biometric_result
+                                else {"skipped": "No selfie provided"},
+        "prado_checks":         prado_result.to_dict() if prado_result
+                                else {"error": "PRADO checks not performed"},
         "manual_review_items": [
             {
                 "feature_id":         v.feature_id,
