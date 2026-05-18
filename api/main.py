@@ -2,7 +2,7 @@
 api/main.py — PRADO Passport Verification API v0.4.0
 """
 
-import json, os, uuid
+import base64, json, os, uuid
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -372,6 +372,149 @@ async def verify_passport(
                 "location":           v.page_location,
                 "requires_equipment": v.requires_equipment,
             }
+            for v in (prado_result.visual_flags if prado_result else [])
+        ],
+        "summary": summary,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Regula integration endpoint
+# ---------------------------------------------------------------------------
+
+@app.post("/verify/from-regula")
+async def verify_from_regula(
+    regula_json: UploadFile = File(..., description="Regula /process response JSON"),
+    selfie: Optional[UploadFile] = File(None, description="Selfie for biometric check"),
+):
+    """
+    Accept Regula Document Reader /process output directly.
+    Adapts it to our schema then runs full PRADO + biometric verification.
+
+    Works with both real Regula hardware output and simulated output
+    from regula_simulator.py.
+    """
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from ingestion.regula_adapter import RegulaAdapter
+
+    verification_id = str(uuid.uuid4())
+    timestamp = datetime.now(timezone.utc).isoformat()
+
+    # Parse Regula JSON
+    try:
+        regula_data = json.loads(await regula_json.read())
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Invalid Regula JSON: {e}")
+
+    # Read selfie if provided
+    selfie_b64 = ""
+    selfie_bytes = None
+    selfie_mime  = "image/jpeg"
+    if selfie:
+        selfie_bytes = await selfie.read()
+        selfie_mime  = "image/jpeg" if "jpeg" in (selfie.content_type or "") else "image/png"
+        selfie_b64   = base64.b64encode(selfie_bytes).decode()
+
+    # Adapt Regula output
+    adapter = RegulaAdapter()
+    adapted = adapter.adapt(regula_data, selfie_b64)
+
+    # Run MRZ checks
+    mrz_result = None
+    if adapted.mrz_line1 and adapted.mrz_line2:
+        mrz_result = check_mrz(adapted.mrz_line1, adapted.mrz_line2)
+
+    # Run PRADO checks
+    prado_result = None
+    if adapted.document_id:
+        try:
+            # Build a minimal OCR result from adapted data for PRADO matcher
+            from verification.ocr_extractor import OCRResult, VIZFields, MRZLines
+            mock_ocr = OCRResult()
+            mock_ocr.viz.surname     = adapted.surname
+            mock_ocr.viz.given_names = adapted.given_names
+            mock_ocr.viz.doc_number  = adapted.doc_number
+            mock_ocr.viz.date_of_birth = adapted.date_of_birth
+            mock_ocr.viz.expiry_date = adapted.expiry_date
+            mock_ocr.viz.nationality = adapted.nationality
+            mock_ocr.viz.photo_present = bool(adapted.portrait_b64)
+            mock_ocr.viz.photo_type  = "colour"
+            mock_ocr.mrz.line1 = adapted.mrz_line1
+            mock_ocr.mrz.line2 = adapted.mrz_line2
+            mock_ocr.name_match       = adapted.regula_mrz_viz_match == 1
+            mock_ocr.dob_match        = adapted.regula_mrz_viz_match == 1
+            mock_ocr.doc_number_match = adapted.regula_mrz_viz_match == 1
+            mock_ocr.expiry_match     = adapted.regula_mrz_viz_match == 1
+
+            # Build NFC data from Regula RFID output
+            nfc_data = {
+                "bac_pace_success":  True,
+                "passive_auth_pass": adapted.regula_nfc_pa_pass,
+                "active_auth_pass":  adapted.regula_nfc_aa_pass,
+                "chip_auth_pass":    None,
+                "DG1": {
+                    "mrz_line1": adapted.mrz_line1,
+                    "mrz_line2": adapted.mrz_line2,
+                },
+                "DG2": {"portrait_b64": adapted.chip_portrait_b64} if adapted.chip_portrait_b64 else None,
+                "SOD": {"dg_hashes": {}, "signature_base64": None},
+            } if adapted.regula_nfc_overall != 2 else None
+
+            prado_result = get_prado_matcher().run_checks(
+                document_id=adapted.document_id,
+                country_code=adapted.country_code,
+                mrz_result=mrz_result,
+                ocr_result=mock_ocr,
+                nfc_data=nfc_data,
+            )
+        except Exception as e:
+            pass
+
+    # Biometric check using white image vs selfie
+    biometric_result = None
+    if selfie_bytes and adapted.white_image_b64:
+        try:
+            passport_bytes = base64.b64decode(adapted.white_image_b64)
+            biometric_result = get_biometric_checker().check_from_bytes(
+                passport_bytes=passport_bytes, passport_mime="image/jpeg",
+                selfie_bytes=selfie_bytes,     selfie_mime=selfie_mime,
+            )
+        except Exception:
+            pass
+
+    # Risk score
+    risk_score, verdict, summary = compute_risk_score(
+        mrz_result, None, prado_result, biometric_result
+    )
+
+    # Add Regula authenticity check results to summary
+    regula_auth_summary = {
+        "overall":  "OK" if adapted.regula_overall_status == 1 else "ERROR",
+        "uv":       adapted.regula_uv_pass,
+        "ir":       adapted.regula_ir_pass,
+        "hologram": adapted.regula_hologram_pass,
+        "fibers":   adapted.regula_fibers_pass,
+        "nfc_pa":   adapted.regula_nfc_pa_pass,
+    }
+
+    return {
+        "verification_id":    verification_id,
+        "timestamp":          timestamp,
+        "document_id":        adapted.document_id,
+        "document_id_source": "regula_output",
+        "country_code":       adapted.country_code,
+        "simulated_input":    adapted.simulated,
+        "overall_verdict":    verdict,
+        "risk_score":         risk_score,
+        "mrz_checks":         mrz_result.to_dict() if mrz_result else {"error": "MRZ not available"},
+        "regula_auth_checks": regula_auth_summary,
+        "prado_checks":       prado_result.to_dict() if prado_result else {"error": "PRADO not run"},
+        "biometric_checks":   biometric_result.to_dict() if biometric_result else {"skipped": "No selfie"},
+        "prado_digital_inputs": adapted.prado_digital_inputs,
+        "manual_review_items": [
+            {"feature_id": v.feature_id, "category": v.feature_category,
+             "location": v.page_location, "requires_equipment": v.requires_equipment}
             for v in (prado_result.visual_flags if prado_result else [])
         ],
         "summary": summary,
